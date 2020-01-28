@@ -1,4 +1,5 @@
 
+import Input
 import Game
 import Deck
 
@@ -12,23 +13,35 @@ main = do
 
 playGame :: Int -> IO ()
 playGame numPlayers = do
-    putStrLn $ "Oh okay " ++ show numPlayers ++ " players"
+    putStrLn $ "\nOh okay " ++ show numPlayers ++ " players"
     sdeck <- shuffleDeck deck
-    let (hands, board, ssdeck) = deal sdeck numPlayers
+    let (hands, prefboard, prefdeck) = deal sdeck numPlayers
     putStrLn $ "Player hands: " ++ (show $ fmap (mapTuple (fmap transcribeCard)) hands)
-    putStrLn $ "Board: " ++ (show board)
-    putStrLn $ "Deck: " ++ (show $ fmap transcribeCard ssdeck)
+    putStrLn $ "Board: " ++ (show $ fmap transcribeCard prefboard)
+    putStrLn $ "Deck:  " ++ (show $ fmap transcribeCard prefdeck)
+    putStrLn "Press 'enter' to see the flop."
+    getLine
 
---startGame :: Deck -> Int -> IO ()
+    let (postfboard, postfdeck) = flop prefboard prefdeck
+    putStrLn $ "Board: " ++ (show $ fmap transcribeCard postfboard)
+    putStrLn $ "Deck: " ++ (show $ fmap transcribeCard postfdeck)
+    putStrLn "Press 'enter' to see the turn."
+    getLine
 
-deal :: Deck -> Int -> ([Hand], Board, Deck)
-deal deck n = let (x, d) = splitAt (2*n) deck
-              in (zip [1..n] $ chunksOf 2 x, [], d)
+    let (posttboard, posttdeck) = turn postfboard postfdeck
+    putStrLn $ "Board: " ++ (show $ fmap transcribeCard posttboard)
+    putStrLn $ "Deck: " ++ (show $ fmap transcribeCard posttdeck)
+    putStrLn "Press 'enter' to see the river."
+    getLine
+
+    let (postrboard, postrdeck) = river posttboard posttdeck
+    putStrLn $ "Board: " ++ (show $ fmap transcribeCard postrboard)
+    putStrLn $ "Deck: " ++ (show $ fmap transcribeCard postrdeck)
+
+    again <- playAgain
+    getChar
+    if again
+        then playGame numPlayers
+        else putStrLn "Thank you for playing."
 
 
-chunksOf :: Int -> [Card] -> [[Card]]
-chunksOf _ [] = []
-chunksOf n xs = take n xs:chunksOf n (drop n xs)
-
-mapTuple :: (a -> b) -> (c, a) -> (c, b)
-mapTuple f (a1, a2) = (a1, f a2)

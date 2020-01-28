@@ -1,33 +1,25 @@
 module Game where
 
-import Data.Char
-import Data.Either
+import Deck
 
-maxPlayers :: Int
-maxPlayers = 9
+deal :: Deck -> Int -> ([Hand], Board, Deck)
+deal deck n = let (x, d) = splitAt (2*n) deck
+              in (zip [1..n] $ chunksOf 2 x, [], d)
 
-getNumPlayers ::  String -> IO Int
-getNumPlayers promptAgain = getFromStdin promptAgain getLine isValidNum read
+flop :: Board -> Deck -> (Board, Deck)
+flop board prefdeck = (take 3 pfdeck ++ board, drop 3 pfdeck)
+                       where pfdeck = burn prefdeck
 
-getFromStdin :: String -> (IO a) -> (a -> Either String Bool) -> (a -> b) -> IO b
-getFromStdin promptAgain inputF isOk transformOk = do
-  input <- inputF
-  if isRight $ isOk input
-     then return $ transformOk input
-     else do
-       putStr $ left $ isOk input
-       getFromStdin promptAgain inputF isOk transformOk
-   
-isValidNum :: String -> Either String Bool
-isValidNum xs = if isNum xs then let n = read xs
-                                 in if n > maxPlayers then Left "Maximum number of players cannot exceed 9.\n"
-                                    else if n < 2     then Left "There must be at least 2 players.\n"
-                                    else Right True;
-                else Left "Please enter a valid number.\n"
+turn :: Board -> Deck -> (Board, Deck)
+turn board pretdeck = (board ++ take 1 posttdeck, drop 1 posttdeck)
+                       where posttdeck = burn pretdeck
 
-isNum :: String -> Bool
-isNum [] = False 
-isNum xs = all isDigit xs
+river :: Board -> Deck -> (Board, Deck)
+river = turn
 
-left :: Either String b -> String
-left (Left x) = x
+burn :: Deck -> Deck
+burn bdeck = drop 1 bdeck
+
+chunksOf :: Int -> [a] -> [[a]]
+chunksOf _ [] = []
+chunksOf n xs = take n xs:chunksOf n (drop n xs)
