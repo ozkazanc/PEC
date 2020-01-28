@@ -2,10 +2,12 @@
 import Input
 import Game
 import Deck
+import Odds
+import Eval
 
 main :: IO ()
 main = do
-    putStr "How many players will be playing today? (2-9)\n"
+    putStr "\nHow many players will be playing today? (2-9)\n"
     numPlayers <- getNumPlayers "\n"
     playGame numPlayers
     putStrLn "Thanks for playing."
@@ -13,30 +15,32 @@ main = do
 
 playGame :: Int -> IO ()
 playGame numPlayers = do
-    putStrLn $ "\nOh okay " ++ show numPlayers ++ " players"
+
+-- Shuffle Deck
     sdeck <- shuffleDeck deck
+
+-- Preflop
     let (hands, prefboard, prefdeck) = deal sdeck numPlayers
     putStrLn $ "Player hands: " ++ (show $ fmap (mapTuple (fmap transcribeCard)) hands)
-    putStrLn $ "Board: " ++ (show $ fmap transcribeCard prefboard)
-    putStrLn $ "Deck:  " ++ (show $ fmap transcribeCard prefdeck)
+    printBoardAndDeck prefboard prefdeck
     putStrLn "Press 'enter' to see the flop."
     getLine
 
+-- Flop
     let (postfboard, postfdeck) = flop prefboard prefdeck
-    putStrLn $ "Board: " ++ (show $ fmap transcribeCard postfboard)
-    putStrLn $ "Deck: " ++ (show $ fmap transcribeCard postfdeck)
+    printBoardAndDeck postfboard postfdeck
     putStrLn "Press 'enter' to see the turn."
     getLine
 
+-- Turn
     let (posttboard, posttdeck) = turn postfboard postfdeck
-    putStrLn $ "Board: " ++ (show $ fmap transcribeCard posttboard)
-    putStrLn $ "Deck: " ++ (show $ fmap transcribeCard posttdeck)
+    printBoardAndDeck posttboard posttdeck
     putStrLn "Press 'enter' to see the river."
     getLine
 
+-- River
     let (postrboard, postrdeck) = river posttboard posttdeck
-    putStrLn $ "Board: " ++ (show $ fmap transcribeCard postrboard)
-    putStrLn $ "Deck: " ++ (show $ fmap transcribeCard postrdeck)
+    printBoardAndDeck postrboard postrdeck
 
     again <- playAgain
     getChar
@@ -45,3 +49,7 @@ playGame numPlayers = do
         else putStrLn "Thank you for playing."
 
 
+printBoardAndDeck :: Board -> Deck -> IO ()
+printBoardAndDeck b d = do
+                      putStrLn $ "Board: " ++ (show $ fmap transcribeCard b)
+                      --putStrLn $ "Deck: " ++ (show $ fmap transcribeCard d)

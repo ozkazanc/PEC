@@ -6,18 +6,10 @@ import Data.Either
 maxPlayers :: Int
 maxPlayers = 9
 
+-- Get the number of players playing the game it cannot exceed maxPlayers
 getNumPlayers ::  String -> IO Int
 getNumPlayers promptAgain = getFromStdin promptAgain getLine isValidNum read
 
-getFromStdin :: String -> (IO a) -> (a -> Either String Bool) -> (a -> b) -> IO b
-getFromStdin promptAgain inputF isOk transformOk = do
-  input <- inputF
-  if isRight $ isOk input
-     then return $ transformOk input
-     else do
-       putStr $ left $ isOk input
-       getFromStdin promptAgain inputF isOk transformOk
-   
 isValidNum :: String -> Either String Bool
 isValidNum xs = if isNum xs then let n = read xs
                                  in if n > maxPlayers then Left "Maximum number of players cannot exceed 9.\n"
@@ -25,6 +17,12 @@ isValidNum xs = if isNum xs then let n = read xs
                                     else Right True;
                 else Left "Please enter a valid number.\n"
 
+isNum :: String -> Bool
+isNum [] = False 
+isNum xs = all isDigit xs
+
+-- Ask if the user wants to play again; 
+-- getYN always returns an uppercase letter, so the check is sufficient
 playAgain :: IO Bool
 playAgain = do 
   putStr "\nPlay again?(y/n)\n"
@@ -40,10 +38,19 @@ isValidYN c = if c `elem` "ynYN" then
                                       Right True
                                  else Left "Play again?(y/n)\n"  
 
-isNum :: String -> Bool
-isNum [] = False 
-isNum xs = all isDigit xs
+-- This contains the logic common to getNum and getYN;
+-- it repeatedly prompts until input matching some criteria
+-- is given, transforms that input, and returns it
+getFromStdin :: String -> (IO a) -> (a -> Either String Bool) -> (a -> b) -> IO b
+getFromStdin promptAgain inputF isOk transformOk = do
+  input <- inputF
+  if isRight $ isOk input
+     then return $ transformOk input
+     else do
+       putStr $ left $ isOk input
+       getFromStdin promptAgain inputF isOk transformOk
 
+-- Utilities functions
 mapTuple :: (a -> b) -> (c, a) -> (c, b)
 mapTuple f (a1, a2) = (a1, f a2)
 
