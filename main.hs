@@ -24,6 +24,7 @@ playGame numPlayers = do
     --putStrLn $ "Player hands: " ++ (show $ fmap (mapTuple (fmap transcribeCard)) hands)
     printPlayerHands hands
     printBoardAndDeck prefboard prefdeck
+    --printPlayerOdds $ calculatePreFlopOdds hands prefboard prefdeck
     putStrLn "Press 'enter' to see the flop."
     getLine
 
@@ -37,12 +38,14 @@ playGame numPlayers = do
 -- Turn
     let (posttboard, posttdeck) = turn postfboard postfdeck
     printBoardAndDeck posttboard posttdeck
+    printPlayerOdds $ calculateRiverOdds hands posttboard posttdeck
     putStrLn "Press 'enter' to see the river."
     getLine
 
 -- River
     let (postrboard, postrdeck) = river posttboard posttdeck
     printBoardAndDeck postrboard postrdeck
+    printPlayerOdds $ calculateWinner hands postrboard postrdeck
 
     again <- playAgain
     getChar
@@ -58,11 +61,11 @@ printBoardAndDeck b d = do
 
 printPlayerOdds :: [(Int, Odds)] -> IO ()
 printPlayerOdds os = putStrLn $ "Player odds: " ++ msg ++ "\n"
-                       where msg = intercalate ", " $ fmap (\(x,y) -> (show x) ++ ": " ++ (show y)) os
+                       where msg = intercalate ", " $ fmap (\(x,y) -> (show x) ++ ": " ++ (show y) ++ "%") os
 
 printPlayerHands :: [(Int, [Card])] -> IO ()
 printPlayerHands ps = let msg = fmap printHand ps
-                      in  putStrLn $ "Player Hands: " ++ (intercalate ", " msg)
+                      in  putStrLn $ "\nPlayer Hands: " ++ (intercalate ", " msg)
 
 printHand :: (Int, [Card]) -> String
 printHand (x,y) = show x ++ "- " ++ (show $ fmap transcribeCard y)
