@@ -32,12 +32,10 @@ evaluate cs
         straightMax = if isFiveHigh then 5 else maximum (fmap fst cs) 
 
 -- This function is called when 2 hands evaluate to the same result to check the second highes card
-evaluateOnSecondHighestCard :: [Card] -> [Card] -> Int
+evaluateOnSecondHighestCard :: [Card] -> [Card] -> Ordering
 evaluateOnSecondHighestCard cs os
-    | isFlush cs || isStraight cs = 0
-    | otherwise =  if res == EQ then 0
-                   else if res == LT then -1
-                   else 1
+    | isFlush cs || isStraight cs = EQ
+    | otherwise =  res
     where
         vsCS = group $ sort $ fmap fst cs
         vsOS = group $ sort $ fmap fst os
@@ -72,3 +70,35 @@ pairs cs = case lengths of
         grouped = groupBy (\x y -> fst x == fst y) sorted
         lengths = sort $ fmap length grouped
         maxCard =  fst $ (last $ sortBy (\x y -> if length x <= length y then LT else GT) grouped) !! 0
+
+-- Given a 7 card hand, find the 5 best cards that make up the best evaluation and hand
+getMaxEval :: [Card] -> (Int, [Card])
+getMaxEval hand = let hs = combinations 5 hand
+                      bh = last $ sortBy (handCompare) hs
+                  in (evaluate bh, bh)
+
+-- First compare 2 hands on their initial evaluations 
+-- if they are the same then check for the second highest car evaluation
+handCompare :: [Card] -> [Card] -> Ordering
+handCompare x y = (evaluate x `compare` evaluate y) `mappend`
+                  (evaluateOnSecondHighestCard x y)
+
+-- K items chosen from a list of n items
+-- Import the 'tails' function
+--   > tails [0,1,2,3]
+--   [[0,1,2,3],[1,2,3],[2,3],[3],[]]
+
+-- The implementation first checks if there's no more elements to select,
+-- if so, there's only one possible combination, the empty one,
+-- otherwise we need to select 'n' elements. Since we don't want to
+-- select an element twice, and we want to select elements in order, to
+-- avoid combinations which only differ in ordering, we skip some
+-- unspecified initial elements with 'tails', and select the next element,
+-- also recursively selecting the next 'n-1' element from the rest of the
+-- tail, finally consing them together
+
+-- Using list comprehensions
+combinations :: Int -> [a] -> [[a]]
+combinations 0 _  = [ [] ]
+combinations n xs = [ y:ys | y:xs' <- tails xs
+                           , ys <- combinations (n-1) xs']

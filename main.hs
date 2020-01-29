@@ -1,4 +1,5 @@
 
+import Data.List (intercalate)
 import Input
 import Game
 import Deck
@@ -10,7 +11,6 @@ main = do
     putStr "\nHow many players will be playing today? (2-9)\n"
     numPlayers <- getNumPlayers "\n"
     playGame numPlayers
-    putStrLn "Thanks for playing."
 
 
 playGame :: Int -> IO ()
@@ -21,7 +21,8 @@ playGame numPlayers = do
 
 -- Preflop
     let (hands, prefboard, prefdeck) = deal sdeck numPlayers
-    putStrLn $ "Player hands: " ++ (show $ fmap (mapTuple (fmap transcribeCard)) hands)
+    --putStrLn $ "Player hands: " ++ (show $ fmap (mapTuple (fmap transcribeCard)) hands)
+    printPlayerHands hands
     printBoardAndDeck prefboard prefdeck
     putStrLn "Press 'enter' to see the flop."
     getLine
@@ -29,6 +30,7 @@ playGame numPlayers = do
 -- Flop
     let (postfboard, postfdeck) = flop prefboard prefdeck
     printBoardAndDeck postfboard postfdeck
+    printPlayerOdds $ calculateTurnOdds hands postfboard postfdeck
     putStrLn "Press 'enter' to see the turn."
     getLine
 
@@ -46,10 +48,23 @@ playGame numPlayers = do
     getChar
     if again
         then playGame numPlayers
-        else putStrLn "Thank you for playing."
+        else putStrLn "Thank you for playing!\n"
 
 
 printBoardAndDeck :: Board -> Deck -> IO ()
 printBoardAndDeck b d = do
                       putStrLn $ "Board: " ++ (show $ fmap transcribeCard b)
                       --putStrLn $ "Deck: " ++ (show $ fmap transcribeCard d)
+
+printPlayerOdds :: [(Int, Odds)] -> IO ()
+printPlayerOdds os = putStrLn $ "Player odds: " ++ msg ++ "\n"
+                       where msg = intercalate ", " $ fmap (\(x,y) -> (show x) ++ ": " ++ (show y)) os
+
+printPlayerHands :: [(Int, [Card])] -> IO ()
+printPlayerHands ps = let msg = fmap printHand ps
+                      in  putStrLn $ "Player Hands: " ++ (intercalate ", " msg)
+
+printHand :: (Int, [Card]) -> String
+printHand (x,y) = show x ++ "- " ++ (show $ fmap transcribeCard y)
+
+
